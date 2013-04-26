@@ -5,20 +5,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import me.parsers.DateParser;
+import me.parsers.IMessageParser;
+import me.parsers.IMessageParser.ParseResult;
+import me.parsers.NullParser;
+import me.parsers.StringNextSpaceParser;
+
 public class TestParse {
+
 	private static class MessageParts {
 		private final List<String> parts = new ArrayList<String>();
-		private final List<String> fields;
+		private final List<IMessageParser<?>> parsers;
 
-		public MessageParts(List<String> fields) {
-			this.fields = fields;
+		public MessageParts(List<IMessageParser<?>> parsers) {
+			this.parsers = parsers;
 		}
 
 		private void addMessage(String msg) {
 			System.err.println("Trying to add: " + msg);
-			if (parts.size() == fields.size()) {
-				throw new IllegalArgumentException(
-						"Maxmimun number of parts = " + fields.size());
+			if (parts.size() == parsers.size()) {
+				throw new IllegalArgumentException("Maxmimun number of parts = " + parsers.size());
 			}
 			parts.add(msg);
 		}
@@ -26,10 +32,12 @@ public class TestParse {
 		@Override
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
-			for (int ii = 0; ii < fields.size(); ++ii) {
-				if (parts.size() < ii) {
-					sb.append(fields.get(ii)).append(": ")
-							.append(parts.get(ii));
+			for (int ii = 0; ii < parsers.size(); ++ii) {
+				if (ii < parts.size()) {
+					if (ii != 0) {
+						sb.append("\n");
+					}
+					sb.append(parsers.get(ii).getName()).append(": ").append(parts.get(ii));
 				} else {
 					break;
 				}
@@ -40,13 +48,13 @@ public class TestParse {
 	}
 
 	private static String PATTERN = "%d \\{[%t]\\} %l - %m";
-	private static Map<String, String> PATTERN_NAMES = new HashMap<String, String>();
+	private static Map<String, IMessageParser> PATTERN_NAMES = new HashMap<String, IMessageParser>();
 
 	static {
-		PATTERN_NAMES.put("%d", "Date");
-		PATTERN_NAMES.put("%t", "Thread");
-		PATTERN_NAMES.put("%l", "Level");
-		PATTERN_NAMES.put("%m", "Message");
+		PATTERN_NAMES.put("%d", new DateParser("Date"));
+		PATTERN_NAMES.put("%t", new StringNextSpaceParser("Thread"));
+		PATTERN_NAMES.put("%l", new StringNextSpaceParser("Level"));
+		PATTERN_NAMES.put("%m", new StringNextSpaceParser("Message"));
 	}
 
 	/**
@@ -54,45 +62,49 @@ public class TestParse {
 	 */
 	public static void main(String[] args) {
 
-		String testString = new String(
-				"26/04/2013 08:15:23.123 [main] INFO com.me.this.Package - message for you");
+		String testString = new String("26.04.2013 08:15:23.123 [main] INFO com.me.this.Package - message for you");
 
-		List<String> partNames = parseFormatString(PATTERN);
+		List<IMessageParser<?>> partNames = parseFormatString(PATTERN);
 		MessageParts msgParts = parseLine(partNames, testString);
 
-		System.out.println(msgParts);
+		System.out.println(msgParts.toString());
 	}
 
-	private static List<String> parseFormatString(String pattern) {
-		List<String> names = new ArrayList<String>();
+	private static List<IMessageParser<?>> parseFormatString(String pattern) {
+		List<IMessageParser<?>> names = new ArrayList<IMessageParser<?>>();
 		String[] parts = pattern.split(" ");
 		for (String part : parts) {
 			int idx = part.indexOf("%");
 			if (-1 != idx) {
 				if (idx + 1 < part.length()) {
 					String type = "%" + part.charAt(idx + 1);
-					String typeName = PATTERN_NAMES.get(type); // might be null
+					// might be null
+					IMessageParser<?> typeName = PATTERN_NAMES.get(type);
+					if (null == typeName) {
+						names.add(new NullParser());
+					}
 					names.add(typeName);
 				}
 			} else {
-				names.add(null);
+				names.add(new NullParser());
 			}
 		}
 		return names;
 	}
 
-	private static MessageParts parseLine(List<String> patternNames, String msg) {
+	private static MessageParts parseLine(List<IMessageParser<?>> parsers, String msg) {
 		String[] parts = msg.split(" ");
-		MessageParts msgParts = new MessageParts(patternNames);
-		for (int ii = 0; ii < parts.length; ii++) {
-			if (ii < patternNames.size() - 1) {
-				msgParts.addMessage(parts[ii]);
+		String input = msg;
+		MessageParts msgParts = new MessageParts(parsers);
+		for (int ii = 0; ii < parsers.size(); ii++) {
+			IMessageParser<?> parser = parsers.get(ii);
+			ParseResult<?> result = parser.parse(input, ii == parsers.size() - 1);
+			input = result.getNextPosString();
+			Object value = result.getValue();
+			if (null != value) {
+				msgParts.addMessage(value.toString());
 			} else {
-				StringBuilder sb = new StringBuilder();
-				for (int jj = ii; jj < parts.length; ++jj) {
-					sb.append(parts[jj]).append(" ");
-				}
-				msgParts.addMessage(sb.toString());
+				msgParts.addMessage(null);
 			}
 		}
 		return msgParts;
