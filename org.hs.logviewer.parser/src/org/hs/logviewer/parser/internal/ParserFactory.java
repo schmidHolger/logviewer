@@ -13,7 +13,8 @@ public class ParserFactory {
 	static {
 		PATTERN_NAMES.put("%d", new DateParser("Date"));
 		PATTERN_NAMES.put("%t", new StringNextSpaceParser("Thread"));
-		PATTERN_NAMES.put("%l", new StringNextSpaceParser("Level"));
+		PATTERN_NAMES.put("%l", new StringNextSpaceParser("Logger"));
+		PATTERN_NAMES.put("%c", new StringNextSpaceParser("Level"));
 		PATTERN_NAMES.put("%m", new StringNextSpaceParser("Message"));
 	}
 

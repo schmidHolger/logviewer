@@ -5,6 +5,11 @@ import org.hs.logviewer.parser.IMessageParser;
 public class DummyParser implements IMessageParser<String> {
 
 	@Override
+	public IMessageParser<String> clone() {
+		return new DummyParser();
+	}
+
+	@Override
 	public String getName() {
 		return "Dummy";
 	}

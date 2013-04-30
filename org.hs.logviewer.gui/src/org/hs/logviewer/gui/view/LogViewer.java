@@ -1,6 +1,7 @@
 package org.hs.logviewer.gui.view;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,8 @@ import org.eclipse.nebula.widgets.nattable.data.IColumnAccessor;
 import org.eclipse.nebula.widgets.nattable.data.IDataProvider;
 import org.eclipse.nebula.widgets.nattable.data.ListDataProvider;
 import org.eclipse.nebula.widgets.nattable.data.convert.DefaultDoubleDisplayConverter;
+import org.eclipse.nebula.widgets.nattable.edit.EditConfigAttributes;
+import org.eclipse.nebula.widgets.nattable.edit.editor.ComboBoxCellEditor;
 import org.eclipse.nebula.widgets.nattable.extension.glazedlists.filterrow.DefaultGlazedListsFilterStrategy;
 import org.eclipse.nebula.widgets.nattable.filterrow.FilterRowDataLayer;
 import org.eclipse.nebula.widgets.nattable.filterrow.FilterRowHeaderComposite;
@@ -87,7 +90,13 @@ public class LogViewer extends ViewPart {
 	public static class FilterRowCustomConfiguration extends
 			AbstractRegistryConfiguration {
 
+		private final ParserEngine engine;
+
 		final DefaultDoubleDisplayConverter doubleDisplayConverter = new DefaultDoubleDisplayConverter();
+
+		public FilterRowCustomConfiguration(ParserEngine engine) {
+			this.engine = engine;
+		}
 
 		@Override
 		public void configureRegistry(IConfigRegistry configRegistry) {
@@ -98,28 +107,25 @@ public class LogViewer extends ViewPart {
 					FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 0);
 
 			// Thread
-			// configRegistry.registerConfigAttribute(
-			// EditConfigAttributes.CELL_EDITOR,
-			// new ComboBoxCellEditor(Arrays.asList(new PricingTypeBean(
-			// "MN"), new PricingTypeBean("AT"))),
-			// DisplayMode.NORMAL,
-			// FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 1);
+			configRegistry.registerConfigAttribute(
+					EditConfigAttributes.CELL_EDITOR,
+					new ComboBoxCellEditor(new ArrayList<String>(engine
+							.getAllColumnValues(1))), DisplayMode.NORMAL,
+					FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 1);
 
 			// Type
-			// configRegistry.registerConfigAttribute(
-			// EditConfigAttributes.CELL_EDITOR,
-			// new ComboBoxCellEditor(Arrays.asList(new PricingTypeBean(
-			// "MN"), new PricingTypeBean("AT"))),
-			// DisplayMode.NORMAL,
-			// FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 2);
+			configRegistry.registerConfigAttribute(
+					EditConfigAttributes.CELL_EDITOR,
+					new ComboBoxCellEditor(new ArrayList<String>(engine
+							.getAllColumnValues(2))), DisplayMode.NORMAL,
+					FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 2);
 
 			// Logger
-			// configRegistry.registerConfigAttribute(
-			// EditConfigAttributes.CELL_EDITOR,
-			// new ComboBoxCellEditor(Arrays.asList(new PricingTypeBean(
-			// "MN"), new PricingTypeBean("AT"))),
-			// DisplayMode.NORMAL,
-			// FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 2);
+			configRegistry.registerConfigAttribute(
+					EditConfigAttributes.CELL_EDITOR,
+					new ComboBoxCellEditor(new ArrayList<String>(engine
+							.getAllColumnValues(3))), DisplayMode.NORMAL,
+					FilterRowDataLayer.FILTER_ROW_COLUMN_LABEL_PREFIX + 3);
 		}
 	};
 
@@ -135,7 +141,7 @@ public class LogViewer extends ViewPart {
 
 	private static final String FILE_NAME = "D:\\scratch\\tmp\\testTrcException.txt";
 
-	private static String PATTERN = "%d \\{[%t]\\} %l - %m";
+	private static String PATTERN = "%d \\{[%t]\\} %c %l - %m";
 
 	private static Comparator<String> getIngnorecaseComparator() {
 		return new Comparator<String>() {
@@ -166,16 +172,17 @@ public class LogViewer extends ViewPart {
 		IConfigRegistry configRegistry = new ConfigRegistry();
 		bodyDataProvider = setupBodyDataProvider();
 		String[] propertyNames = new String[] { "date", "thread", "level",
-				"message" };
+				"logger", "message" };
 		Map<String, String> propertyToLabels = new HashMap<String, String>();
 		propertyToLabels.put("date", "Date");
 		propertyToLabels.put("thread", "Thread");
 		propertyToLabels.put("level", "Level");
+		propertyToLabels.put("logger", "Logger");
 		propertyToLabels.put("message", "Message");
 
 		// Underlying data source
 		EventList<IMessagePart> eventList = GlazedLists.eventList(engine
-				.parse());
+				.getParsedMessages());
 		FilterList<IMessagePart> filterList = new FilterList<IMessagePart>(
 				eventList);
 
@@ -245,7 +252,7 @@ public class LogViewer extends ViewPart {
 		NatTable natTable = new NatTable(parent, gridLayer, false);
 		natTable.addConfiguration(new DefaultNatTableStyleConfiguration());
 		natTable.addConfiguration(new HeaderMenuConfiguration(natTable));
-		natTable.addConfiguration(new FilterRowCustomConfiguration() {
+		natTable.addConfiguration(new FilterRowCustomConfiguration(engine) {
 			@Override
 			public void configureRegistry(IConfigRegistry configRegistry) {
 				super.configureRegistry(configRegistry);
@@ -286,7 +293,7 @@ public class LogViewer extends ViewPart {
 			@Override
 			public int getColumnCount() {
 				// TODO get from Pattern
-				return 4;
+				return 5;
 			}
 
 			@Override
@@ -301,7 +308,7 @@ public class LogViewer extends ViewPart {
 			}
 		};
 
-		return new ListDataProvider(engine.parse(), columnAccessor);
+		return new ListDataProvider(engine.getParsedMessages(), columnAccessor);
 
 	}
 }

@@ -12,12 +12,23 @@ public class StringNextSpaceParser implements IMessageParser<String> {
 	}
 
 	@Override
+	public IMessageParser<String> clone() {
+		return new StringNextSpaceParser(name);
+	}
+
+	@Override
 	public String getName() {
 		return name;
 	}
 
 	@Override
 	public String getValue() {
+		if (null == value) {
+			throw new IllegalStateException("getValue() called before parsing!");
+		}
+
+		System.out.println("value=" + value + " 0x"
+				+ Integer.toHexString(System.identityHashCode(this)));
 		return value;
 	}
 
@@ -28,18 +39,27 @@ public class StringNextSpaceParser implements IMessageParser<String> {
 
 	@Override
 	public ParseResult<String> parse(String input, boolean untilEnd) {
+		value = "";
 		if (true == untilEnd) {
-			value = input;
+			value = new String(input);
 			return new ParseResult<String>(input, "");
 		}
-		int idx = input.indexOf(" ");
+
+		int idx = 0;
+		int length = input.length();
+		while (input.charAt(idx) != ' ' && idx < length) {
+			++idx;
+		}
+		while (input.charAt(idx) == ' ' && idx < length) {
+			++idx;
+		}
+
 		if (-1 != idx) {
-			String rest = idx + 1 >= input.length() ? "" : input
-					.substring(idx + 1);
-			value = input.substring(0, idx);
+			String rest = idx == length ? "" : input.substring(idx);
+			value = new String(input.substring(0, idx));
 			return new ParseResult<String>(value, rest);
 		}
-		value = input;
+		value = new String(input);
 		return new ParseResult<String>(input, "");
 	}
 }

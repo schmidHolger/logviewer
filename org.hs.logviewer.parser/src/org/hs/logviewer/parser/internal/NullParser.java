@@ -5,6 +5,11 @@ import org.hs.logviewer.parser.IMessageParser;
 public class NullParser implements IMessageParser<String> {
 
 	@Override
+	public IMessageParser<String> clone() {
+		return new NullParser();
+	}
+
+	@Override
 	public String getName() {
 		return null;
 	}
@@ -27,7 +32,7 @@ public class NullParser implements IMessageParser<String> {
 		}
 
 		int idx = input.indexOf(" ");
-		idx = input.indexOf(" ", idx + 1);
+		// idx = input.indexOf(" ", idx + 1);
 		String rest = idx + 1 >= input.length() ? "" : input.substring(idx + 1);
 		return new ParseResult<String>(null, rest);
 	}

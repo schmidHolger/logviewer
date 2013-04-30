@@ -8,7 +8,6 @@ import org.hs.logviewer.parser.IMessageParser.ParseResult;
 import org.hs.logviewer.parser.IMessagePart;
 
 public class MessagePart implements IMessagePart {
-	private final List<String> parts = new ArrayList<String>();
 	private final List<IMessageParser<?>> parsers = new ArrayList<IMessageParser<?>>();
 	private final List<IMessageParser<?>> displayableParsers = new ArrayList<IMessageParser<?>>();
 	private final String msg;
@@ -42,8 +41,11 @@ public class MessagePart implements IMessagePart {
 	}
 
 	@Override
-	public Object getValue(int index) {
+	public String getValue(int index) {
 		doParse();
+		// System.out.println("getValue(): msg=" + msg);
+		// System.out.println("displayableParsers.get(index): "
+		// + displayableParsers.get(index));
 		return displayableParsers.get(index).getValue();
 	}
 

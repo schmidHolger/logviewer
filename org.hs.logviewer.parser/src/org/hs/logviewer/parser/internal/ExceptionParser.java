@@ -15,6 +15,11 @@ public class ExceptionParser implements IMessageParser<String> {
 	}
 
 	@Override
+	public IMessageParser<String> clone() {
+		return new ExceptionParser(messages.toString());
+	}
+
+	@Override
 	public String getName() {
 		return "Exception";
 	}

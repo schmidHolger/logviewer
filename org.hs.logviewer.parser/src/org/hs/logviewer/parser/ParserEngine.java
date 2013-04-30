@@ -7,7 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.hs.logviewer.parser.internal.ExceptionParser;
 import org.hs.logviewer.parser.internal.MessagePart;
@@ -15,7 +17,6 @@ import org.hs.logviewer.parser.internal.ParserFactory;
 
 public class ParserEngine {
 	private final List<IMessageParser<?>> parsers;
-	private final boolean inException = false;
 	private ExceptionParser exceptionParser;
 	private final File msgFile;
 	private ArrayList<IMessagePart> parts;
@@ -25,7 +26,25 @@ public class ParserEngine {
 		this.msgFile = msgFile;
 	}
 
-	public List<IMessagePart> parse() {
+	public Set<String> getAllColumnValues(int columnIndex) {
+		Set<String> values = new HashSet<String>();
+		for (IMessagePart part : getParsedMessages()) {
+			String value = part.getValue(columnIndex);
+			if (false == value.isEmpty()) {
+				values.add(value);
+			}
+		}
+		return values;
+	}
+
+	public List<IMessagePart> getParsedMessages() {
+		if (null == parts) {
+			parse();
+		}
+		return parts;
+	}
+
+	private void parse() {
 		parts = new ArrayList<IMessagePart>();
 		FileInputStream fis = null;
 		BufferedReader br = null;
@@ -60,8 +79,6 @@ public class ParserEngine {
 				}
 			}
 		}
-
-		return parts;
 	}
 
 	public IMessagePart parseLine(String msg) {
@@ -72,7 +89,7 @@ public class ParserEngine {
 			if (0 == ii) {
 				try {
 					parser.parse(input, ii == parsers.size() - 1);
-					msgParts.addParser(parser);
+					msgParts.addParser(parser.clone());
 					exceptionParser = null;
 				} catch (Exception e) {
 					if (null == exceptionParser) {
@@ -91,7 +108,7 @@ public class ParserEngine {
 					return null; // do not add any more
 				}
 			} else {
-				msgParts.addParser(parser);
+				msgParts.addParser(parser.clone());
 			}
 		}
 		return msgParts;

@@ -16,12 +16,19 @@ public class DateParser implements IMessageParser<String> {
 	}
 
 	@Override
+	public IMessageParser<String> clone() {
+		return new DateParser(name);
+	}
+
+	@Override
 	public String getName() {
 		return name;
 	}
 
 	@Override
 	public String getValue() {
+		System.out.println("value=" + value + " 0x"
+				+ Integer.toHexString(System.identityHashCode(this)));
 		return value;
 	}
 

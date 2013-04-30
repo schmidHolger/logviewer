@@ -12,6 +12,11 @@ public class StringEndParser implements IMessageParser<String> {
 	}
 
 	@Override
+	public IMessageParser<String> clone() {
+		return new StringEndParser(name);
+	}
+
+	@Override
 	public String getName() {
 		return name;
 	}

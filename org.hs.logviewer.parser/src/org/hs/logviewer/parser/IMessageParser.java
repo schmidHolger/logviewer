@@ -1,6 +1,6 @@
 package org.hs.logviewer.parser;
 
-public interface IMessageParser<T> {
+public interface IMessageParser<T> extends Cloneable {
 	public static class ParseResult<T> {
 		private final String nextPosString;
 		private final T val;
@@ -19,6 +19,8 @@ public interface IMessageParser<T> {
 			return val;
 		}
 	}
+
+	public IMessageParser<T> clone();
 
 	String getName();
 
