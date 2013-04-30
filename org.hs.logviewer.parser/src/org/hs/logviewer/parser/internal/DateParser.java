@@ -27,8 +27,6 @@ public class DateParser implements IMessageParser<String> {
 
 	@Override
 	public String getValue() {
-		System.out.println("value=" + value + " 0x"
-				+ Integer.toHexString(System.identityHashCode(this)));
 		return value;
 	}
 

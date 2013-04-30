@@ -26,9 +26,6 @@ public class StringNextSpaceParser implements IMessageParser<String> {
 		if (null == value) {
 			throw new IllegalStateException("getValue() called before parsing!");
 		}
-
-		System.out.println("value=" + value + " 0x"
-				+ Integer.toHexString(System.identityHashCode(this)));
 		return value;
 	}
 
